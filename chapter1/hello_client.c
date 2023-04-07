@@ -4,8 +4,8 @@
 void errorHandling(char *message);
 
 int main(int argc, char* argv[]) {
+    char* argvCopy[3];
     if (argc != 3) {
-        char* argvCopy[3];
         argv = argvCopy;
         argv[1] = "127.0.0.1";
         argv[2] = "9190";

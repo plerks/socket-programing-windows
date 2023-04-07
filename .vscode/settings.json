@@ -16,6 +16,7 @@
         "signal.h": "c",
         "sigaction.h": "c",
         "limits": "c",
-        "stdlib.h": "c"
+        "stdlib.h": "c",
+        "winsock2.h": "c"
     }
 }

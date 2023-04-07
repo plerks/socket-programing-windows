@@ -5,8 +5,8 @@
 void errorHandling(char *message);
 
 int main(int argc, char *argv[]) {
+    char* argvCopy[2];
     if (argc != 2) {
-        char* argvCopy[2];
         argv = argvCopy;
         argv[1] = "9190";
     }
