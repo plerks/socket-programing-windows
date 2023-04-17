@@ -17,6 +17,8 @@
         "sigaction.h": "c",
         "limits": "c",
         "stdlib.h": "c",
-        "winsock2.h": "c"
+        "winsock2.h": "c",
+        "windows.h": "c",
+        "process.h": "c",
     }
 }
