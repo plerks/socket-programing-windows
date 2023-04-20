@@ -8,7 +8,7 @@
                 "-fdiagnostics-color=always",
                 "-g",
                 "${file}",
-                "-lwsock32",
+                "-lws2_32",
                 "-o",
                 "${fileDirname}/${fileBasenameNoExtension}"
             ],
@@ -34,7 +34,7 @@
                 "-fdiagnostics-color=always",
                 "-g",
                 "${cwd}/chapter1/hello_server.c",
-                "-lwsock32",
+                "-lws2_32",
                 "-o",
                 "${fileDirname}/${fileBasenameNoExtension}"
             ],
@@ -55,7 +55,7 @@
                 "-fdiagnostics-color=always",
                 "-g",
                 "${cwd}/chapter1/hello_client.c",
-                "-lwsock32",
+                "-lws2_32",
                 "-o",
                 "${fileDirname}/${fileBasenameNoExtension}"
             ],

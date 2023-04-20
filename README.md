@@ -7,8 +7,8 @@ Most code is based on the book's chapter example code (Not all example code is c
 To run the code, typically you need to run the server and its corresponding client to see the effect. Take chapter1 for example. You need to:
 ```
 cd chapter1
-gcc hello_server.c -o hello_server -lwsock32 -Wall
-gcc hello_client.c -o hello_client -lwsock32 -Wall
+gcc hello_server.c -o hello_server -lws2_32 -Wall
+gcc hello_client.c -o hello_client -lws2_32 -Wall
 ./hello_server
 ./hello_client
 ```
