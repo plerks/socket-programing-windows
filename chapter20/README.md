@@ -12,4 +12,4 @@ Else getRandomName() would get a wrong length string(for example 0). It's becaus
 
 To undef the max macro, add `undef max` in the head (`undef max(a, b)` also works but gets a compiler warning).
 
-Need to run `chcp 936` in advance to set encoding to GBK and run with command line (like chapter 9). Else the Chinese characters in message will grable.
+Need to run `chcp 936` in advance to set encoding to GBK and run with command line or compile with option `-fexec-charset=GBK` (like chapter 9). Else the Chinese characters in message will garble.
