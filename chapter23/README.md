@@ -12,26 +12,37 @@ Another thing weird is that if run CmplRouEchoServ.c along with chapter21/echo_c
 
 Need to call functions like SleepEx(DWORD dwMilliseconds, BOOL bAlertable) to get the thread into alertable wait status, and then the completion routine function can be called (windows' rule).
 
-SleepEx(DWORD dwMilliseconds, BOOL bAlertable) microsoft [doc](https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-sleepex): 
-```html
+[SleepEx(DWORD dwMilliseconds, BOOL bAlertable) Microsoft doc](https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-sleepex):
+
+---
+
 Suspends the current thread until the specified condition is met. Execution resumes when one of the following occurs:
 An I/O completion callback function is called.
 An asynchronous procedure call (APC) is queued to the thread.
 The time-out interval elapses.
+
 ...
+
 a value of zero (dwMilliseconds) causes the thread to relinquish the remainder of its time slice to any other thread that is ready to run (like Java's yield()).
-```
+
+---
+
 I guess the mechanism works like this:
 
 when calling functions like SleepEx(), the current thread gets into alertable wait status until return. In windows, only in alertable wait status can the completion function be called, so when windows found (SleepEx() is probably a system call) the thread entered alertable wait status (which means the current thread don't have things to do, which means execute callback functions now won't bother the procedure stream), it goes about to call the callback function, add the callback function frame to the callstack.
 
 See [this](https://learn.microsoft.com/en-us/windows-hardware/drivers/kernel/waits-and-apcs):
 
-```html
+---
+
 Typically, the thread remains in the wait state until the operating system can complete the operation that the caller requests. However, if the caller specifies WaitMode = UserMode, the operating system might interrupt the wait.
+
 ...
+
 The exact situations in which the operating system interrupts the wait depends on the value of the Alertable parameter of the routine. If Alertable = TRUE, the wait is an alertable wait. Otherwise, the wait is a non-alertable wait. The operating system interrupts alertable waits only to deliver a user APC.
-```
+
+---
+
 To know it better, need to learn about windows' APC mechanism.
 
 The main point of CmplRouEchoServ.c is using asynchronous I/O and completion routine. But the need to call SleepEx() makes the code not elegant.
@@ -44,15 +55,21 @@ In my understanding, IOCP works like this: calling `CreateIoCompletionPort(INVAL
 
 Usually set IOCP thread number == user program worker thread number == system processors number.
 
-[I/O Completion Ports' Microsoft doc](https://learn.microsoft.com/en-us/windows/win32/fileio/i-o-completion-ports)
-```html
-When a process creates an I/O completion port, the system creates an associated queue object for threads whose sole purpose is to service these requests. Processes that handle many concurrent asynchronous I/O requests can do so more quickly and efficiently by using I/O completion ports in conjunction with a pre-allocated thread pool than by creating threads at the time they receive an I/O request.
-```
+[I/O Completion Ports' Microsoft doc](https://learn.microsoft.com/en-us/windows/win32/fileio/i-o-completion-ports):
 
-[CreateIoCompletionPort() Microsoft doc](https://learn.microsoft.com/en-us/windows/win32/fileio/createiocompletionport#remarks)
-```html
+---
+
+When a process creates an I/O completion port, the system creates an associated queue object for threads whose sole purpose is to service these requests. Processes that handle many concurrent asynchronous I/O requests can do so more quickly and efficiently by using I/O completion ports in conjunction with a pre-allocated thread pool than by creating threads at the time they receive an I/O request.
+
+---
+
+[CreateIoCompletionPort() Microsoft doc](https://learn.microsoft.com/en-us/windows/win32/fileio/createiocompletionport#remarks):
+
+---
+
 The I/O system can be instructed to send I/O completion notification packets to I/O completion ports, where they are queued. The CreateIoCompletionPort function provides this functionality.
-```
+
+---
 
 And what information do we care when getting the finish information?
 
