@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
     mutex = CreateMutex(NULL, FALSE, NULL);
     struct sockaddr_in clientAddr;
     while (1) {
-        int addrSize = sizeof(serverAddr);
+        int addrSize = sizeof(clientAddr);
         SOCKET clientSock = accept(serverSock, (struct sockaddr *)&clientAddr, &addrSize);
         WaitForSingleObject(mutex, INFINITE);
         clientSocks[clientCount++] = clientSock;

@@ -57,8 +57,7 @@ int main(int argc, char *argv[])
                         errorHandling("accept error");
                         break;
                     }
-                    int addrSize = sizeof(serverAddr);
-                    SOCKET clientSock = accept(serverSock, (struct sockaddr *)&serverAddr, &addrSize);
+                    SOCKET clientSock = accept(serverSock, NULL, NULL);
                     socks[sockCount] = clientSock;
                     events[sockCount] = WSACreateEvent();
                     /* Microsoft's doc: The WSAEventSelect function automatically sets socket s to nonblocking mode,

@@ -44,9 +44,8 @@ int main(int argc, char *argv[]) {
         can be called (windows' rule).
         A value of zero (dwMilliseconds) causes the thread to relinquish the remainder of its time slice to any other thread that is ready to run. */
         SleepEx(1, TRUE);
-        int addr_size = sizeof(serverAddr);
         // serverSock is nonblocking, and then accept() is nonblocking, return nonblocking socket
-        SOCKET clientSock = accept(serverSock, (struct sockaddr *)&serverAddr, &addr_size);
+        SOCKET clientSock = accept(serverSock, NULL, NULL);
         if (clientSock == INVALID_SOCKET) {
             if (WSAGetLastError() == WSAEWOULDBLOCK) {
                 continue;

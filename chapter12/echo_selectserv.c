@@ -62,8 +62,9 @@ int main(int argc, char *argv[]) {
             if (FD_ISSET(i, &cpyReadset)) {
                 changedQuantity += 1;
                 if (i == serverSock) { // extract connection from serverSock
-                    int addr_size = sizeof(serverAddr);
-                    int client_sock = accept(serverSock, (struct sockaddr *)&serverAddr, &addr_size);
+                    struct sockaddr_in clientAddr;
+                    int addr_size = sizeof(clientAddr);
+                    int client_sock = accept(serverSock, (struct sockaddr *)&clientAddr, &addr_size);
                     if (client_sock > maxfd) {
                         maxfd = client_sock;
                     }
