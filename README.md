@@ -1,22 +1,14 @@
+## What's this about
+
 Here is my learning on socket programing. Based on a book called *TCP/IP网络编程* (ISBN 9787115358851).
 
 The code is in c and not cross-platform. Here is code for windows. See the code for linux [here](https://github.com/plerks/socket-programing-linux).
 
-Most code is based on the book's chapter example code (Not all example code is contained). And I may have adjusted the code style based on my own habit or added some adjustment. I'm following camelCase naming convention for the windows code.
+The **bookcode** folder contains code originates from the book's example code (Not all example code is contained). And I may have adjusted the code style based on my own habit or added some adjustment.
 
-To run the code, typically you need to run the server and its corresponding client to see the effect. Take chapter1 for example. You need to:
-```
-cd chapter1
-gcc hello_server.c -o hello_server -lws2_32 -Wall
-gcc hello_client.c -o hello_client -lws2_32 -Wall
-./hello_server
-./hello_client
-```
-Else you can open the project with VSCode and run the code with my setting. Just to launch the target "${fileBasenameNoExtension}" is fine.
+The **HTTP_server** folder contains code implementing an HTTP server. The book's chapter24 demonstrated how to code a basic HTTP server. But it's quite basic, just accept, create new thread to read, resolve and write, without using any concurrent mode introduced in the book before. And the author mentioned that because for normal HTTP protocol, the server just close the connetion after responsing (short connection), no time for IOCP/epoll to make much effect, so using IOCP/epoll won't bring much improvement. Despite that, I used IOCP to implement the server (originate from chapter23/IOCPEchoServ.c).
 
-Server serves at port 9190 by default, you can configure it by running like `./hello_server 9190`.
-
-Client connect to 127.0.0.1:9190 by default, you can configure it by running like `./hello_client 127.0.0.1 9190`.
+I'm following camelCase naming convention for the windows code.
 
 `gcc --version`:
 ```
@@ -25,3 +17,7 @@ Copyright (C) 2018 Free Software Foundation, Inc.
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 ```
+
+## How to run
+
+The **bookcode** and **HTTP_server**... folders have different VSCode running configuration. So I used VSCode's mutiple workspace function: a .code-workspace file has declared mutiple projects. As long as you open the .code-workspace file with VSCode, the projects will be treated as individual workspace. Or you can open **bookcode** and **HTTP_server**... folders respectively with VSCode and run. Or you can compile and run with command line. For more details, see the secondary README.md files. 

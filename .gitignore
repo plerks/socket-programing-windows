@@ -2,3 +2,5 @@
 *.exe
 test.c
 temp.*
+*.o
+*.a

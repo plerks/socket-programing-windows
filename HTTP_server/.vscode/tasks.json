@@ -7,10 +7,14 @@
             "args": [
                 "-fdiagnostics-color=always",
                 "-g",
-                "${file}",
+                "${cwd}/src/DemoApplication.c",
+                "${workspaceFolder}/lib/Handlers.c",
+                "${workspaceFolder}/lib/Server.c",
                 "-lws2_32",
+                "-I",
+                "${workspaceFolder}/include",
                 "-o",
-                "${fileDirname}/${fileBasenameNoExtension}"
+                "${cwd}/src/DemoApplication"
             ],
             "options": {
                 "cwd": "${fileDirname}"

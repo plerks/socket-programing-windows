@@ -1,0 +1,20 @@
+{
+    "folders": [
+        {
+            "path": "."
+        },
+        {
+            "path": "bookcode"
+        },
+        {
+            "path": "HTTP_server"
+        }
+    ],
+    "settings": {
+        "files.associations": {
+            "handlers.h": "c",
+            "server.h": "c",
+            "string.h": "c"
+        }
+    }
+}
