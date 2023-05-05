@@ -56,16 +56,16 @@ void *postDemoHandleFunc(struct Request *request, struct AioArgument *aioArgumen
     send(sock, emptyLine, strlen(emptyLine), 0);
     int contentLength = getContentLength(request->headers);
     int len = 0;
-    int recvLen = 0;
+    int recvLen = 0; // total body data received
     int bufSize = 50;
     char buf[bufSize];
     // Now aioArgument buf may have received part of the post request body data.
     int aioReceivedBodyLength = aioArgument->totalBytes - (strstr(aioArgument->buf, "\r\n\r\n") - aioArgument->buf) - strlen("\r\n\r\n");
     send(sock, strstr(aioArgument->buf, "\r\n\r\n") + strlen("\r\n\r\n"), aioReceivedBodyLength, 0);
-    len += aioReceivedBodyLength;
-    while (len < contentLength) {
-        recvLen += recv(sock, buf, bufSize, 0);
-        len += recvLen;
+    recvLen += aioReceivedBodyLength;
+    while (recvLen < contentLength) {
+        len = recv(sock, buf, bufSize, 0);
+        recvLen += len;
         send(sock, buf, len, 0);
     }
 }

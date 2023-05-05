@@ -8,13 +8,17 @@
         },
         {
             "path": "HTTP_server"
+        },
+        {
+            "path": "HTTP_request"
         }
     ],
     "settings": {
         "files.associations": {
             "handlers.h": "c",
             "server.h": "c",
-            "string.h": "c"
+            "string.h": "c",
+            "myhttp.h": "c"
         }
     }
 }
