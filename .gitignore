@@ -4,3 +4,6 @@ test.c
 temp.*
 *.o
 *.a
+*.so
+*.lib
+*.dll

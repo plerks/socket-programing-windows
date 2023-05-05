@@ -18,13 +18,28 @@ HTTP_server> gcc src/DemoApplication.c lib/Handlers.c lib/Server.c -I include -l
 HTTP_server> ./src/DemoApplication
 ```
 
+Here I note down how to create static/shared(dynamic) libraries and statically/dynamically link it. For just running the project, there's no need to create a static/shared library.
+
 3.Or
 ```
-HTTP_server\lib> gcc -c .\Handlers.c .\Server.c -I ../include
+HTTP_server\lib> gcc -c ./Handlers.c ./Server.c -I ../include
 HTTP_server\lib> ar -cr libmyserver.a Handlers.o Server.o
 HTTP_server> gcc ./src/DemoApplication.c -I include -L lib -lmyserver -lws2_32 -o src/DemoApplication
 HTTP_server> ./src/DemoApplication
 ```
+
+4.Or
+```
+HTTP_server\lib> gcc -shared -fpic ./Handlers.c ./Server.c -I ../include -lws2_32 -o libmyserver.dll
+
+Put libmyserver.dll in a dynamic-link library search path, for example, C:\Windows\System32.
+
+HTTP_server> gcc ./src/DemoApplication.c -I include -L lib -lmyserver -lws2_32 -o src/DemoApplication
+HTTP_server> ./src/DemoApplication
+```
+
+
+Windows static/shared library usually ends with .lib/.dll while linux .a/.so. But it seems that my gcc version acknowledge the .a/.dll suffix combination. If `ar -cr libmyserver.lib Handlers.o Server.o`, then `gcc ./src/DemoApplication.c -I include -L lib -lmyserver -lws2_32 -o src/DemoApplication` will fail. And if `gcc -shared -fpic ./Handlers.c ./Server.c -I ../include -lws2_32 -o libmyserver.so`, then `gcc ./src/DemoApplication.c -I include -L lib -lmyserver -lws2_32 -o src/DemoApplication` will fail.
 
 ## How to see the effect
 

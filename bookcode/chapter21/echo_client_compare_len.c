@@ -20,6 +20,11 @@ int main(int argc, char *argv[]) {
     serverAddr.sin_family = AF_INET;
     serverAddr.sin_addr.s_addr = inet_addr(argv[1]);
     serverAddr.sin_port = htons(atoi(argv[2]));
+    /* The first argument should be indicating protocol family, but the first parameter name of socket() in windows is af.
+    see <https://learn.microsoft.com/en-us/windows/win32/api/winsock2/nf-winsock2-socket>:
+    Note that the values for the AF_ address family and PF_ protocol family constants are identical (for example, AF_INET and PF_INET),
+    so either constant can be used.
+    */
     int sock = socket(PF_INET, SOCK_STREAM, 0);
     if (connect(sock, (struct sockaddr *)&serverAddr, sizeof(serverAddr)) != 0) {
         errorHandling("connect() error");

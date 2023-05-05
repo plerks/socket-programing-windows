@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "HttpRequestDemo", // run DemoApplication
+            "name": "HttpRequestDemo", // run HttpRequestDemo
             "type": "cppdbg",
             "request": "launch",
             "program": "${cwd}/src/HttpRequestDemo",
