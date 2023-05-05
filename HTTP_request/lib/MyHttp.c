@@ -23,6 +23,7 @@ unsigned WINAPI threadRun_get(void *argList);
 unsigned WINAPI threadRun_post(void *argList);
 void resolveDomainNameFromUrl(char *url, char *domainName);
 void getRequestLineUrlFromUrl(char *Url, char *requestLineUrl);
+int resolvePortFromUrl(char *url);
 
 void *get(char *url, void *(*then)(void *)) {
     struct arg_get *argList = (struct arg_get *)malloc(sizeof(struct arg_get));
@@ -61,7 +62,7 @@ unsigned WINAPI threadRun_get(void *argList) {
     memset(&serverAddr, 0, sizeof(serverAddr));
     serverAddr.sin_family = AF_INET;
     serverAddr.sin_addr.s_addr = (*ipAddr).s_addr;
-    serverAddr.sin_port = htons(80);
+    serverAddr.sin_port = htons(resolvePortFromUrl(arg->url));
     int sock = socket(PF_INET, SOCK_STREAM, 0);
     if (connect(sock, (struct sockaddr *)&serverAddr, sizeof(serverAddr)) != 0) {
         printf("connect() error\n");
@@ -97,7 +98,7 @@ unsigned WINAPI threadRun_post(void *argList) {
     memset(&serverAddr, 0, sizeof(serverAddr));
     serverAddr.sin_family = AF_INET;
     serverAddr.sin_addr.s_addr = (*ipAddr).s_addr;
-    serverAddr.sin_port = htons(80);
+    serverAddr.sin_port = htons(resolvePortFromUrl(arg->url));
     int sock = socket(PF_INET, SOCK_STREAM, 0);
     if (connect(sock, (struct sockaddr *)&serverAddr, sizeof(serverAddr)) != 0) {
         printf("connect() error\n");
@@ -140,5 +141,20 @@ void getRequestLineUrlFromUrl(char *url, char *requestLineUrl) {
     while((*s) != '\0') {
         requestLineUrl[i++] = *s;
         s++;
+    }
+}
+
+int resolvePortFromUrl(char *url) {
+    char buf[6] = {0};
+    char *s = strstr(strstr(url, "//"), ":");
+    if (s == NULL) {
+        return 80;
+    }
+    else {
+        s += strlen(":");
+        for (int i = 0; *(s + i) != '/'; i++) {
+            buf[i] = *(s + i);
+        }
+        return atoi(buf);
     }
 }
