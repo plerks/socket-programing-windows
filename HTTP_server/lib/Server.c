@@ -49,6 +49,7 @@ void startServer(char *ip, int port) {
         // The fourth argument will be ignored as long as the second argument is not NULL.
         SOCKET *clientSockPtr = (SOCKET *)malloc(sizeof(SOCKET));
         (*clientSockPtr) = clientSock;
+        // associate the clientSock with the completionPort
         CreateIoCompletionPort((HANDLE)clientSock, completionPort, (ULONG_PTR)clientSockPtr, 0);
         struct AioArgument *aioArgument = (struct AioArgument *)malloc(sizeof(struct AioArgument));
         memset(aioArgument, 0, sizeof(struct AioArgument));
@@ -92,7 +93,17 @@ unsigned WINAPI threadRun(void *completionPort) {
             callProperHandler(&request, aioArgument);
             freeRequest(&request);
             closesocket(sock);
+            /* `CreateIoCompletionPort((HANDLE)clientSock, completionPort, (ULONG_PTR)clientSockPtr, 0)` has associated the socket with the completion port object
+            created by `CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 0)`. About whether it's needed to disassociate, see the Microsoft doc:
+            <https://learn.microsoft.com/en-us/windows/win32/fileio/createiocompletionport>
+            "A handle can be associated with only one I/O completion port, and after the association is made, the handle remains associated with that I/O completion port until it is closed."
+            Inferring from the words, the association is removed when the socket is closed.
+
+            And a similar question on stackoverflow <https://stackoverflow.com/questions/6573218/removing-a-handle-from-a-i-o-completion-port-and-other-questions-about-iocp>,
+            An answer mentioned that: "It is not necessary to explicitly disassociate a handle from an I/O completion port; closing the handle is sufficient."
+            */
             free(aioArgument);
+            free(clientSockPtr);
         }
     }
     return 0;
