@@ -46,9 +46,9 @@ void startServer(char *ip, int port) {
     }
     while (1) {
         SOCKET clientSock = accept(serverSock, NULL, NULL);
-        // The fourth argument will be ignored as long as the second argument is not NULL.
         SOCKET *clientSockPtr = (SOCKET *)malloc(sizeof(SOCKET));
         (*clientSockPtr) = clientSock;
+        // The fourth argument will be ignored as long as the second argument is not NULL.
         // associate the clientSock with the completionPort
         CreateIoCompletionPort((HANDLE)clientSock, completionPort, (ULONG_PTR)clientSockPtr, 0);
         struct AioArgument *aioArgument = (struct AioArgument *)malloc(sizeof(struct AioArgument));
@@ -89,7 +89,7 @@ unsigned WINAPI threadRun(void *completionPort) {
             request.requestLine = newString(aioArgument->buf, aioArgument->buf, strstr(aioArgument->buf, "\r\n") + strlen("\r\n"));
             request.headers = newString(aioArgument->buf, strstr(aioArgument->buf, "\r\n") + strlen("\r\n"), strstr(aioArgument->buf, "\r\n\r\n") + strlen("\r\n"));
             request.emptyLine = newString(aioArgument->buf, strstr(aioArgument->buf, "\r\n\r\n") + strlen("\r\n"), strstr(aioArgument->buf, "\r\n\r\n") + 2 * strlen("\r\n"));
-            // If in callProperHandler() asynchronous I/O is called to recv/send data, things would be much more complicated.
+            // If in callProperHandler() asynchronous I/O is called to recv/send data, need to add code to distinguish if the completion is from user code or server code.
             callProperHandler(&request, aioArgument);
             freeRequest(&request);
             closesocket(sock);

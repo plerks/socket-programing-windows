@@ -2,7 +2,7 @@ An HTTP server. Able to serve static files and Implemented basic function that u
 
 The function is limited and not easy to use, far less than formal framework.
 
-I used asynchronous WSARecv() to receive data until all the data before emptyLine is received. However, then in callProperHandler() I have to assume that no asynchronous I/O is called else things would be much more complicated.
+I used asynchronous WSARecv() to receive data until all the data before emptyLine is received. However, then in callProperHandler() I assumed that in the user code in DemoApplication.c, no asynchronous I/O is called (WSARecv()/WSASend() function). If to support the user code to use asynchronous I/O, the solution would be like adding a "from" field in AioArgument to indicate if the I/O completion is from the user code or server code. And wrap WSARecv()/WSASend() with a user-provided callback function. In server.c, distinguish if the completion is from the server code or user code by the "from" field. If from user, call the user callback function (the function pointer is passed by aioArgument).
 
 Default c lib does not have common data structures like String or Map. And I did't implement one myself. So I need to define buf length as an estimated upper bound or write some other compromised code.
 
