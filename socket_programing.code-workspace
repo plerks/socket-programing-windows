@@ -11,14 +11,9 @@
         },
         {
             "path": "HTTP_request"
+        },
+        {
+            "path": "HTTPS_server"
         }
-    ],
-    "settings": {
-        "files.associations": {
-            "handlers.h": "c",
-            "server.h": "c",
-            "string.h": "c",
-            "myhttp.h": "c"
-        }
-    }
+    ]
 }
