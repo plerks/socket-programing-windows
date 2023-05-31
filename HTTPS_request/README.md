@@ -18,3 +18,10 @@ HTTPS_request> ./src/HttpsRequestDemo
 
 ## About the HTTPS certificate verify.
 By calling `SSL_CTX_load_verify_locations()` in lib/MyHttps.c, the certificate tls_files/server.crt that I created using openssl command line is trusted. But the domain name inner it is "gxytestserver.com", so the certificate check will fail, and as for requesting other public domain, the certificate check will also fail since I did't place their corresponding certificate files (see my comment in lib/MyHttps.c) in `SSL_CTX_load_verify_locations()` CApath.
+
+## Reference
+ * https://wiki.openssl.org/index.php/SSL/TLS_Client
+ * https://blog.csdn.net/weixin_42700740/article/details/117604696
+ * https://www.jianshu.com/p/55638dae64d9
+
+ The reference code called functions like `SSL_library_init()` to init openssl, but see [this](https://wiki.openssl.org/index.php/Library_Initialization): "If you are using OpenSSL 1.0.2 or below, then you would use SSL_library_init. If you are using OpenSSL 1.1.0 or above, then the library will initialize itself automatically."
