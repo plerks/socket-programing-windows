@@ -57,19 +57,35 @@ void *postDemoHandleFunc(struct Request *request, struct AioArgument *aioArgumen
     int contentLength = getContentLength(request->headers);
     int len = 0;
     int recvLen = 0; // total body data received
-    char buf[SMALL_BUF_SIZE];
-    char decryptedBuf[SMALL_BUF_SIZE];
-    while ((len = BIO_read(aioArgument->wbio, buf, SMALL_BUF_SIZE)) > 0) {
-        send(sock, buf, len, 0);
-    }
+    char buf[SMALL_BUF_SIZE] = {0};
+    char decryptedBuf[SMALL_BUF_SIZE] = {0};
     // Now aioArgument buf may have received part of the post request body data.
     int aioReceivedBodyLength = aioArgument->decryptedTotalBytes - (strstr(aioArgument->decryptedBuf, "\r\n\r\n") - aioArgument->decryptedBuf) - strlen("\r\n\r\n");
     My_SSL_write_and_send(aioArgument, strstr(aioArgument->decryptedBuf, "\r\n\r\n") + strlen("\r\n\r\n"), aioReceivedBodyLength);
     recvLen += aioReceivedBodyLength;
     while (recvLen < contentLength) {
-        len = recv(sock, buf, SMALL_BUF_SIZE, 0);
+        // It seems that SSL_read() can retrive data from socket, not only the data written into BIO using BIO_write().
+        len = SSL_read(aioArgument->ssl, decryptedBuf, SMALL_BUF_SIZE);
+        recvLen += len;
+        SSL_write(aioArgument->ssl, decryptedBuf, len);
+        // It seems that SSL_write() don't send the data out to the peer, need to manually call send()
+        while ((len = BIO_read(aioArgument->wbio, buf, SMALL_BUF_SIZE)) > 0) {
+            send(sock, buf, len, 0);
+        }
+
+        // Or code like this:
+        /* len = recv(sock, buf, SMALL_BUF_SIZE, 0);
+        if (len < 0 && WSAGetLastError() == EWOULDBLOCK) {
+            continue;
+        }
         BIO_write(aioArgument->rbio, buf, len);
-        recvLen += SSL_read(aioArgument->ssl, decryptedBuf, SMALL_BUF_SIZE);
-        send(sock, buf, len, 0);
+        len = SSL_read(aioArgument->ssl, decryptedBuf, SMALL_BUF_SIZE);
+        recvLen += len;
+        SSL_write(aioArgument->ssl, decryptedBuf, len);
+        // To read all the data out, need to call BIO_read() mutiply times since the buffer might be not big enough and can't read all the data in one call.
+        while ((len = BIO_read(aioArgument->wbio, buf, SMALL_BUF_SIZE)) > 0) {
+            send(sock, buf, len, 0);
+        } */
     }
+    shutdown(sock, SD_SEND);
 }

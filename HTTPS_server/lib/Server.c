@@ -114,7 +114,6 @@ unsigned WINAPI threadRun(void *completionPort) {
             request.emptyLine = newString(aioArgument->decryptedBuf, strstr(aioArgument->decryptedBuf, "\r\n\r\n") + strlen("\r\n"), strstr(aioArgument->decryptedBuf, "\r\n\r\n") + 2 * strlen("\r\n"));
             // If in callProperHandler() asynchronous I/O is called to recv/send data, need to add code to distinguish if the completion is from user code or server code.
             callProperHandler(&request, aioArgument);
-            freeRequest(&request);
             freeAioArgument(aioArgument);
             /* `CreateIoCompletionPort((HANDLE)clientSock, completionPort, (ULONG_PTR)clientSockPtr, 0)` has associated the socket with the completion port object
             created by `CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 0)`. About whether it's needed to disassociate, see the Microsoft doc:
@@ -340,7 +339,7 @@ void freeAioArgument(struct AioArgument *aioArgument) {
 // write chars into the ssl's wbio and send out
 void My_SSL_write_and_send(struct AioArgument *aioArgument, char *s, int len) {
     SSL_write(aioArgument->ssl, s, strlen(s));
-    char buf[SMALL_BUF_SIZE];
+    char buf[SMALL_BUF_SIZE] = {0};
     int temp;
     while ((temp = BIO_read(aioArgument->wbio, buf, SMALL_BUF_SIZE)) > 0) {
         send(aioArgument->sock, buf, temp, 0);

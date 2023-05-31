@@ -53,7 +53,7 @@ unsigned WINAPI threadRun_get(void *argList) {
     */
     struct hostent *hostent = gethostbyname(domainName);
     // choose the first ipaddress
-    if (hostent->h_addr_list[0] == NULL) {
+    if (hostent == NULL) {
         printf("error when resolving domain name\n");
         exit(1);
     }
