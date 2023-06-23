@@ -8,7 +8,7 @@ Asynchronous I/O suits the requirement best. However, windows asynchronous I/O f
 
 ## How to run
 
-First, need to ensure the server is running. You can run **HTTP_server** or change the domain name in src/HttpRequestDemo.c to some public domain name.
+First, need to ensure the server is running. You can run **HTTP_server** or change the domain name in src/HttpRequestDemo.c to some public domain name. Take an example of GET <http://www.baidu.com/index.html>, baidu did't close the connection after responding. Actually, it's a keep-alive connection and has "Connection: keep-alive" in the response header, so I need to use Content-Length header to tell if the client has received all the data and close the connection in the client side (see MyHttp.c threadRun_get() function), else my client implementation will keep pending (or the buf is not big enough and used up, the loop of threadRun_get() in MyHttp.c can also exit).
 
 1.Open **HTTP_request** folder with VSCode and open src/HttpRequestDemo.c to run.
 

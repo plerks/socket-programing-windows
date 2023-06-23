@@ -32,6 +32,7 @@ int resolvePortFromUrl(char *url);
 void My_SSL_write_and_send(SSL *ssl, SOCKET sock, char *s, int len);
 void get_common_name_from_line(char common_name[], char *line);
 BOOL checkCertificateDomainName(char *line, char *url, char *commonName);
+int getContentLength(char *buf);
 
 void *get(char *url, void *(*then)(void *)) {
     struct arg_get *argList = (struct arg_get *)malloc(sizeof(struct arg_get));
@@ -163,8 +164,19 @@ unsigned WINAPI threadRun_get(void *argList) {
     BIO_write(SSL_get_rbio(ssl), buf, recvLen);
     len = 0;
     recvLen = 0;
-    while ((len = SSL_read(ssl, decryptedBuf + recvLen, BUF_SIZE - recvLen)) > 0) {
-        recvLen += len;
+    while ((len = SSL_read(ssl, decryptedBuf + recvLen, BUF_SIZE - recvLen)) != 0) {
+        if (len == -1) {
+            printf("len: -1, WSAGetLastError(): %d\n", WSAGetLastError());
+            break;
+        }
+        else {
+            recvLen += len;
+            int contentLength = getContentLength(buf);
+            int receivedBodyLength = recvLen - (strstr(buf, "\r\n\r\n") + strlen("\r\n\r\n") - buf);
+            if (receivedBodyLength >= contentLength || recvLen > BUF_SIZE - 1) {
+                break;
+            }
+        }
     }
     if (strstr(decryptedBuf, "\r\n\r\n") == NULL) {
         arg->then("");
@@ -172,6 +184,8 @@ unsigned WINAPI threadRun_get(void *argList) {
     else {
         arg->then(strstr(decryptedBuf, "\r\n\r\n") + strlen("\r\n\r\n"));
     }
+    closesocket(sock);
+    free(arg);
 }
 
 unsigned WINAPI threadRun_post(void *argList) {
@@ -251,7 +265,11 @@ unsigned WINAPI threadRun_post(void *argList) {
     char buf[BUF_SIZE] = {0};
     int recvLen = 0;
     int len = 0;
-    while ((len = recv(sock, buf + recvLen, BUF_SIZE - recvLen, 0)) > 0) {
+    while ((len = recv(sock, buf + recvLen, BUF_SIZE - recvLen, 0)) != 0) {
+        if (len == -1) {
+            printf("len: -1, WSAGetLastError(): %d\n", WSAGetLastError());
+            break;
+        }
         recvLen += len;
     }
     char decryptedBuf[BUF_SIZE] = {0};
@@ -267,12 +285,14 @@ unsigned WINAPI threadRun_post(void *argList) {
     else {
         arg->then(strstr(decryptedBuf, "\r\n\r\n") + strlen("\r\n\r\n"));
     }
+    closesocket(sock);
+    free(arg);
 }
 
 void resolveDomainNameFromUrl(char *url, char *domainName) {
     char *s = strstr(url, "//");
     s += 2;
-    for (int i = 0; *(s + i) != ':' && *(s + i) != '/'; i++) {
+    for (int i = 0; *(s + i) != ':' && *(s + i) != '/' && *(s + i) != '\0'; i++) {
         domainName[i] = *(s + i);
     }
 }
@@ -282,6 +302,10 @@ void getRequestLineUrlFromUrl(char *url, char *requestLineUrl) {
     s = strstr(url, "//");
     s += 2;
     s = strstr(s, "/");
+    if (s == NULL) {
+        requestLineUrl[0] = '/';
+        return;
+    }
     int i = 0;
     while((*s) != '\0') {
         requestLineUrl[i++] = *s;
@@ -297,7 +321,7 @@ int resolvePortFromUrl(char *url) {
     }
     else {
         s += strlen(":");
-        for (int i = 0; *(s + i) != '/'; i++) {
+        for (int i = 0; *(s + i) != '/' && *(s + i) != '\0'; i++) {
             buf[i] = *(s + i);
         }
         return atoi(buf);
@@ -345,4 +369,18 @@ BOOL checkCertificateDomainName(char *line, char *url, char *commonName) {
     }
 
     return !strcmp(commonName, domainName);
+}
+
+int getContentLength(char *buf) {
+    char *s = strstr(buf, "Content-Length");
+    if (s == NULL) {
+        return INT_MAX;
+    }
+    s = strstr(s, ":");
+    char numString[50] = {0};
+    s = s + 1;
+    for (int i = 0; s[i] != '\r'; i++) {
+        numString[i] = s[i];
+    }
+    return atoi(numString);
 }
