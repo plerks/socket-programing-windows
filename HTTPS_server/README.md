@@ -52,7 +52,7 @@ Referring to [this](https://ningyu1.github.io/site/post/51-ssl-cert/), run:
 2. run `openssl req -new -key server.key -out server.csr` to generate the .csr file. Fill in your domain name in the common name field in the terminal. I tested that openssl permits to generate a certificate with domain name localhost.
 3. run `openssl x509 -req -in server.csr -out server.crt -signkey server.key -days 36500` to generate the .crt file
 
-I have placed the .crt and .key file at the serverfile folder.
+I have placed the .crt and .key file at the tls_files folder.
 
 ## Use openssl under IOCP
 reference:
