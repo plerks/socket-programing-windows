@@ -86,7 +86,14 @@ unsigned WINAPI threadRun_get(void *argList) {
         else {
             recvLen += len;
             int contentLength = getContentLength(buf);
-            int receivedBodyLength = recvLen - (strstr(buf, "\r\n\r\n") + strlen("\r\n\r\n") - buf);
+            int receivedBodyLength = 0;
+            if (strstr(buf, "\r\n\r\n") == NULL) {
+                receivedBodyLength = 0;
+            }
+            else {
+                receivedBodyLength = recvLen - (strstr(buf, "\r\n\r\n") + strlen("\r\n\r\n") - buf);
+            }
+            // here BUF_SIZE - 1 is to guarantee there is a '\0' in the end, since in callback_get() need to treat buf as string
             if (receivedBodyLength >= contentLength || recvLen > BUF_SIZE - 1) {
                 break;
             }
