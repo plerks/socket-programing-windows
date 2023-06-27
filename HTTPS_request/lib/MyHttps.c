@@ -147,35 +147,31 @@ unsigned WINAPI threadRun_get(void *argList) {
     My_SSL_write_and_send(ssl, sock, requestLineUrl, strlen(requestLineUrl));
     My_SSL_write_and_send(ssl, sock, " HTTP/1.1\r\n", strlen(" HTTP/1.1\r\n"));
     My_SSL_write_and_send(ssl, sock, "\r\n", strlen("\r\n"));
-    /* Need to call this. It's weird that I found that if I don't call this, the above sent-out data might not be really send out (probably
-    cached in the socket, but the extreme weird thing is that windows socket did't decide to send the data out even after a period of time).
-    And cause a result that at least for my implementation of HTTPS_server, the server did't receive the data until the emptyline,
-    and it stucks at WSARecv() and don't respond.
+    /* In case the server holds keep-alive connection, `shutdown(sock, SD_SEND)` here else `len = recv(sock, buf, BUF_SIZE, 0)` will keep pending.
+    Having called `shutdown(sock, SD_SEND)`, the server will take the initiative to close the connection after it sent all data.
+    And below I added to logic to close in the client side by Content-Length, so not calling `shutdown(sock, SD_SEND)` also works fine.
     */
     shutdown(sock, SD_SEND);
 
     char buf[BUF_SIZE] = {0};
-    int recvLen = 0;
-    int len = 0;
-    while ((len = recv(sock, buf + recvLen, BUF_SIZE - recvLen, 0)) > 0) {
-        recvLen += len;
-    }
     char decryptedBuf[BUF_SIZE] = {0};
-    BIO_write(SSL_get_rbio(ssl), buf, recvLen);
-    len = 0;
-    recvLen = 0;
-    while ((len = SSL_read(ssl, decryptedBuf + recvLen, BUF_SIZE - recvLen)) != 0) {
-        if (len == -1) {
-            printf("len: -1, WSAGetLastError(): %d\n", WSAGetLastError());
-            break;
+    int len = 0;
+    int totalDecryptedLen = 0;
+    while ((len = recv(sock, buf, BUF_SIZE, 0)) > 0) {
+        BIO_write(SSL_get_rbio(ssl), buf, len);
+        while ((len = SSL_read(ssl, decryptedBuf + totalDecryptedLen, BUF_SIZE - totalDecryptedLen)) > 0) {
+            totalDecryptedLen += len;
+        }
+        int contentLength = getContentLength(decryptedBuf);
+        int receivedBodyLength = 0;
+        if (strstr(decryptedBuf, "\r\n\r\n") == NULL) {
+            receivedBodyLength = 0;
         }
         else {
-            recvLen += len;
-            int contentLength = getContentLength(buf);
-            int receivedBodyLength = recvLen - (strstr(buf, "\r\n\r\n") + strlen("\r\n\r\n") - buf);
-            if (receivedBodyLength >= contentLength || recvLen > BUF_SIZE - 1) {
-                break;
-            }
+            receivedBodyLength = totalDecryptedLen - (strstr(decryptedBuf, "\r\n\r\n") + strlen("\r\n\r\n") - decryptedBuf);
+        }
+        if (receivedBodyLength >= contentLength || totalDecryptedLen > BUF_SIZE - 1) {
+            break;
         }
     }
     if (strstr(decryptedBuf, "\r\n\r\n") == NULL) {
@@ -263,21 +259,25 @@ unsigned WINAPI threadRun_post(void *argList) {
     shutdown(sock, SD_SEND);
 
     char buf[BUF_SIZE] = {0};
-    int recvLen = 0;
+    char decryptedBuf[BUF_SIZE] = {0};
     int len = 0;
-    while ((len = recv(sock, buf + recvLen, BUF_SIZE - recvLen, 0)) != 0) {
-        if (len == -1) {
-            printf("len: -1, WSAGetLastError(): %d\n", WSAGetLastError());
+    int totalDecryptedLen = 0;
+    while ((len = recv(sock, buf, BUF_SIZE, 0)) > 0) {
+        BIO_write(SSL_get_rbio(ssl), buf, len);
+        while ((len = SSL_read(ssl, decryptedBuf + totalDecryptedLen, BUF_SIZE - totalDecryptedLen)) > 0) {
+            totalDecryptedLen += len;
+        }
+        int contentLength = getContentLength(decryptedBuf);
+        int receivedBodyLength = 0;
+        if (strstr(decryptedBuf, "\r\n\r\n") == NULL) {
+            receivedBodyLength = 0;
+        }
+        else {
+            receivedBodyLength = totalDecryptedLen - (strstr(decryptedBuf, "\r\n\r\n") + strlen("\r\n\r\n") - decryptedBuf);
+        }
+        if (receivedBodyLength >= contentLength || totalDecryptedLen > BUF_SIZE - 1) {
             break;
         }
-        recvLen += len;
-    }
-    char decryptedBuf[BUF_SIZE] = {0};
-    BIO_write(SSL_get_rbio(ssl), buf, recvLen);
-    len = 0;
-    recvLen = 0;
-    while ((len = SSL_read(ssl, decryptedBuf + recvLen, BUF_SIZE - recvLen)) > 0) {
-        recvLen += len;
     }
     if (strstr(decryptedBuf, "\r\n\r\n") == NULL) {
         arg->then("");

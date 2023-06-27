@@ -95,7 +95,11 @@ unsigned WINAPI threadRun(void *completionPort) {
         aioArgument = (struct AioArgument *)lpOverlapped;
         // WSARecv() get encrypted data, use BIO_write() to write into buf and use SSL_read() to get decrypted data
         BIO_write(aioArgument->rbio, aioArgument->wsaBuf.buf, numberOfBytes);
-        aioArgument->decryptedTotalBytes += SSL_read(aioArgument->ssl, aioArgument->decryptedBuf + aioArgument->decryptedTotalBytes, BUF_SIZE);
+        int len = 0;
+        // need to call SSL_read() in a loop to read all the data out
+        while ((len = SSL_read(aioArgument->ssl, aioArgument->decryptedBuf + aioArgument->decryptedTotalBytes, BUF_SIZE)) > 0) {
+            aioArgument->decryptedTotalBytes += len;
+        }
         aioArgument->wsaBuf.buf += numberOfBytes;
         aioArgument->wsaBuf.len -= numberOfBytes;
         aioArgument->totalBytes += numberOfBytes;

@@ -56,7 +56,7 @@ void *postDemoHandleFunc(struct Request *request, struct AioArgument *aioArgumen
     My_SSL_write_and_send(aioArgument, emptyLine, strlen(emptyLine));
     int contentLength = getContentLength(request->headers);
     int len = 0;
-    int recvLen = 0; // total body data received
+    int recvLen = 0; // total decrypted body data received
     char buf[SMALL_BUF_SIZE] = {0};
     char decryptedBuf[SMALL_BUF_SIZE] = {0};
     // Now aioArgument buf may have received part of the post request body data.
@@ -64,28 +64,37 @@ void *postDemoHandleFunc(struct Request *request, struct AioArgument *aioArgumen
     My_SSL_write_and_send(aioArgument, strstr(aioArgument->decryptedBuf, "\r\n\r\n") + strlen("\r\n\r\n"), aioReceivedBodyLength);
     recvLen += aioReceivedBodyLength;
     while (recvLen < contentLength) {
-        // It seems that SSL_read() can retrive data from socket, not only the data written into BIO using BIO_write().
-        len = SSL_read(aioArgument->ssl, decryptedBuf, SMALL_BUF_SIZE);
-        recvLen += len;
-        SSL_write(aioArgument->ssl, decryptedBuf, len);
-        // It seems that SSL_write() don't send the data out to the peer, need to manually call send()
-        while ((len = BIO_read(aioArgument->wbio, buf, SMALL_BUF_SIZE)) > 0) {
-            send(sock, buf, len, 0);
+        /* In case there is data unread inner ssl, read all out first.(But this should't happen since in Server.c threadRun() I have
+        called SSL_read() in a loop to read all decrypted data out)
+        */
+        while ((len = SSL_read(aioArgument->ssl, decryptedBuf, SMALL_BUF_SIZE)) > 0) {
+            recvLen += len;
+            SSL_write(aioArgument->ssl, decryptedBuf, len);
+            while ((len = BIO_read(aioArgument->wbio, buf, SMALL_BUF_SIZE)) > 0) {
+                send(sock, buf, len, 0);
+            }
         }
 
-        // Or code like this:
-        /* len = recv(sock, buf, SMALL_BUF_SIZE, 0);
-        if (len < 0 && WSAGetLastError() == EWOULDBLOCK) {
-            continue;
+        len = recv(sock, buf, SMALL_BUF_SIZE, 0);
+        if (len < 0) {
+            int err = WSAGetLastError();
+            if (err == EWOULDBLOCK) {
+                continue;
+            }
+            else {
+                printf("recv() returned -1 with WSAGetLastError(): %d\n", err);
+                exit(1);
+            }
         }
         BIO_write(aioArgument->rbio, buf, len);
-        len = SSL_read(aioArgument->ssl, decryptedBuf, SMALL_BUF_SIZE);
-        recvLen += len;
-        SSL_write(aioArgument->ssl, decryptedBuf, len);
-        // To read all the data out, need to call BIO_read() mutiply times since the buffer might be not big enough and can't read all the data in one call.
-        while ((len = BIO_read(aioArgument->wbio, buf, SMALL_BUF_SIZE)) > 0) {
-            send(sock, buf, len, 0);
-        } */
+        while ((len = SSL_read(aioArgument->ssl, decryptedBuf, SMALL_BUF_SIZE)) > 0) {
+            recvLen += len;
+            SSL_write(aioArgument->ssl, decryptedBuf, len);
+            // To read all the data out, need to call BIO_read() mutiply times since the buffer might be not big enough and can't read all the data in one call.
+            while ((len = BIO_read(aioArgument->wbio, buf, SMALL_BUF_SIZE)) > 0) {
+                send(sock, buf, len, 0);
+            }
+        }
     }
     shutdown(sock, SD_SEND);
 }

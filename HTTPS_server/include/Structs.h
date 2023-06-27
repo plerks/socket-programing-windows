@@ -9,7 +9,7 @@ BUF_SIZE and AioArgument used to be defined in Server.h. Server.h needs to inclu
 needs to include Server.h for using BUF_SIZE and struct AioArgument. Thus loop depending. If Handlers.h does't include Server.h,
 the program can run but have a warning since can't find the definition of struct AioArgument in Handlers.h.
 */
-#define BUF_SIZE 2048
+#define BUF_SIZE 20480
 #define SMALL_BUF_SIZE 50
 
 struct AioArgument {
