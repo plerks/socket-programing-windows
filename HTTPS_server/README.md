@@ -104,3 +104,10 @@ My summaries about openssl's vital functions used about encrypting/decrypting da
 BIO_write()/BIO_read() don't conduct encrypt/decrypt, just data moving. SSL_write()/SSL_read() conduct the data form change. To use IOCP, must use windows' asynchronous socket I/O functions like WSASend()/WSARecv() to send/recv data (These functions are probably already system calls, else the completion port can't capture the completion of I/O), so need to use the openssl's functions as a encrypt/decrypt tool and don't let openssl do the send/recv work.
 
 When using IOCP, it's needed to use windows' WSASend()/WSARecv() function so that the completion port can capture the I/O completion. So it's needed to encrypt/decrypt the data. More specifically, SSL * has buffer inside, after WSARecv() has got the HTTPS encrypted data, use BIO_write() to write the encrypted data into the buffer, and then use SSL_read() to read decrypted data from the buffer. And as for sending data, after the data to be sent is determined, use SSL_write() to write the plain data into the buffer (now encrypted), and then use BIO_read() to get the encrypted data and send it out with WSASend().
+
+## Understanding of asynchronous I/O
+The introduction of asynchronous I/O is supposed to be based on such fact that I/O is usually slower than common actions, especially socket I/O that requires geographic transmission.
+
+So, when the thread changes synchronous I/O to asynchronous I/O, it has the chance to perform other actions since returning from the I/O functions immediately, instead of pending on the slow I/O functions. And the actual I/O is performed by more basic layers. And the finish of asynchronous I/O can be acquired by means like IOCP's GetQueuedCompletionStatus() function.
+
+On the other hand, asynchronous I/O making a difference requires that the thread have actual actions that can be performed not depending on the finish of the I/O. Else asynchronous I/O might not introduce optimization.

@@ -43,8 +43,9 @@ int main(int argc, char *argv[]) {
     }
     SYSTEM_INFO systemInfo;
     GetSystemInfo(&systemInfo);
-    /* create completion port object. If NumberOfConcurrentThreads is zero, the system allows as many concurrently running 
-    threads as there are processors in the system. */
+    /* create completion port object. NumberOfConcurrentThreads indicates the maximum number of threads that the operating system
+    can allow to concurrently process I/O completion packets for the I/O completion port.If NumberOfConcurrentThreads is zero, the
+    system allows as many concurrently running threads as there are processors in the system. */
     HANDLE completionPort = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 0);
     for (int i = 0; i < systemInfo.dwNumberOfProcessors; i++) {
         _beginthreadex(NULL, 0, echoThreadRun, (void *)completionPort, 0, NULL);

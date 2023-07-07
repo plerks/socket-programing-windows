@@ -49,17 +49,19 @@ The main point of CmplRouEchoServ.c is using asynchronous I/O and completion rou
 
 ### IOCPEchoServ.c
 
-**IOCP**. Thread pool + asynchronous I/O + multiple user program worker thread.
+**IOCP**. Asynchronous I/O. Used multiple worker threads to acquire the finish of asynchronous I/O and handle (using thread pool should be better).
 
-In my understanding, IOCP works like this: calling `CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 0)`, windows [creates an I/O completion port](https://learn.microsoft.com/en-us/windows/win32/fileio/createiocompletionport), which contains a thread pool to handle I/O. And the second CreateIoCompletionPort call: `CreateIoCompletionPort((HANDLE)clientSock, completionPort, (ULONG_PTR)clientSockPtr, 0)` tells the os that I care about the I/O finish on the file handle - clientSock. Then, when os finishes I/O on clientSock, the completion port object saves an object with related information into a message queue. And then the program can dequeue a finish information object by calling `GetQueuedCompletionStatus()`.
+IOCP works like this: calling `CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 0)`, windows [creates an I/O completion port](https://learn.microsoft.com/en-us/windows/win32/fileio/createiocompletionport). And the second CreateIoCompletionPort call: `CreateIoCompletionPort((HANDLE)clientSock, completionPort, (ULONG_PTR)clientSockPtr, 0)` tells the os that I care about the I/O finish on the file handle - clientSock. The asynchronous I/O functions will return immediately and the acutal data transmission is performed by the os or aio library and when finishes I/O on clientSock, a completion port packet with related information will be saved into a blocking queue of the completion port. And then the program can dequeue a finish information object by calling `GetQueuedCompletionStatus()`.
 
-Usually set IOCP thread number == user program worker thread number == system processors number.
+Usually set IOCP thread number == user program worker thread number == system processors number. But using thread pool should be better, since some request might be time-consuming and keep occupying the thread and cause starvation to other request.
 
 [I/O Completion Ports' Microsoft doc](https://learn.microsoft.com/en-us/windows/win32/fileio/i-o-completion-ports):
 
 ---
 
-When a process creates an I/O completion port, the system creates an associated queue object for threads whose sole purpose is to service these requests. Processes that handle many concurrent asynchronous I/O requests can do so more quickly and efficiently by using I/O completion ports in conjunction with a pre-allocated thread pool than by creating threads at the time they receive an I/O request.
+I/O completion ports provide an efficient threading model for processing multiple asynchronous I/O requests on a multiprocessor system. When a process creates an I/O completion port, the system creates an associated queue object for threads whose sole purpose is to service these requests. Processes that handle many concurrent asynchronous I/O requests can do so more quickly and efficiently by using I/O completion ports in conjunction with a pre-allocated thread pool than by creating threads at the time they receive an I/O request.
+
+The CreateIoCompletionPort function creates an I/O completion port and associates one or more file handles with that port. When an asynchronous I/O operation on one of these file handles completes, an I/O completion packet is queued in first-in-first-out (FIFO) order to the associated I/O completion port. One powerful use for this mechanism is to combine the synchronization point for multiple file handles into a single object, although there are also other useful applications. Please note that while the packets are queued in FIFO order they may be dequeued in a different order.
 
 ---
 
